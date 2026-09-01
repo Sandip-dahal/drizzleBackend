@@ -1,13 +1,11 @@
 import { integer, timestamp, check,uuid,text, pgTable } from "drizzle-orm/pg-core";
-import { date } from "drizzle-orm/mysql-core";
-import { time } from "node:console";
 import { sql } from "drizzle-orm";
 
 
-const userTable = pgTable("users", {
+const users = pgTable("users", {
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
-    email: text("email").unique().notNull(),
+    email: text("email").unique("user_email_unique").notNull(),
     password: text("password").notNull(),
     number: text("number").notNull(),
     age: integer("age").notNull(),
@@ -16,7 +14,7 @@ const userTable = pgTable("users", {
     profile: text("profile").notNull(),
 }, (table) =>[
     check("age_check1", sql `${table.age} between 18 and 50`),
-    check("email", sql `${table.email} ~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`),
-    check("number_check", sql `${table.number}:: text ~ '^[0-9]{10}$'`)
 ]
 )
+
+export { users}

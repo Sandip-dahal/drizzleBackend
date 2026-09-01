@@ -1,10 +1,23 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
+import userRoutes from "./routes/user.routes.js"
+import {cors} from "hono/cors"
 
 const app = new Hono()
 
-app.get('/user', (c) => {
-  return c.text('bt ho bhai ')
+app.use("*",cors())
+
+app.route("/api/v1/user", userRoutes)
+
+
+
+
+app.onError((err,c)=>{
+  console.error(err)
+  return c.json({
+    success:false,
+    message:"internal server error"
+  }, 500)
 })
 
 serve({
