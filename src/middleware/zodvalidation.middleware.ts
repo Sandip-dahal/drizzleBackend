@@ -25,11 +25,34 @@ const userSchemaValidaition = z.object({
     .min(8,"password must be atleast 8 char"),
 
 });
-
-
 export const validateUser = zValidator("form", userSchemaValidaition)
 export type register = z.infer< typeof userSchemaValidaition >
 
-export const loginSchema = userSchemaValidaition.pick({email:true, password: true})
+
+//zod login scheme validaion ..........
+export const loginSchema = userSchemaValidaition.pick({
+    email:true, 
+    password: true
+})
 export const validatelogin = zValidator("json",loginSchema)
 export type logintype = z.infer<typeof loginSchema>
+
+
+
+//zod update scheme .........
+export const updateUserSchema = userSchemaValidaition.pick({
+    name: true,
+    email:true, 
+    age:true, 
+    number:true
+}).partial()
+export const validateUpdate = zValidator("json",updateUserSchema)
+export type updateUserType = z.infer<typeof updateUserSchema>
+
+
+export const updatePasswordSchema = z.object({
+    oldPassword: z.string().min(1, "Old password is required"),
+    newPassword: z.string().min(8, "New password must be at least 8 characters"),
+});
+
+export const validateUpdatePassword = zValidator("json", updatePasswordSchema);

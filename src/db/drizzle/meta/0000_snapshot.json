@@ -1,5 +1,5 @@
 {
-  "id": "ac0969f2-b3ee-4869-98d7-3cb6587bbee0",
+  "id": "a6f901c8-d139-4a8a-a7db-d12e6dfd1514",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -64,6 +64,12 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "refresh_token": {
+          "name": "refresh_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -86,7 +92,7 @@
         },
         "number_check": {
           "name": "number_check",
-          "value": "\"users\".\"number\":: text ~ '^[0-9]{10}$'"
+          "value": "\"users\".\"number\"::text ~ '^[0-9]{10}$'"
         }
       },
       "isRLSEnabled": false
