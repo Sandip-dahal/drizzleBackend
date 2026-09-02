@@ -56,3 +56,27 @@ export const updatePasswordSchema = z.object({
 });
 
 export const validateUpdatePassword = zValidator("json", updatePasswordSchema);
+
+const forgetPasswordSchema = userSchemaValidaition.pick({
+    email: true,
+})
+export const validateforgetPassword = zValidator("json",forgetPasswordSchema)
+export type forgetPasswordType = z.infer<typeof forgetPasswordSchema>
+
+//verify otp schema ........
+
+ const verifyOtpSchema = z.object({
+    email: z.email(),
+    otp:z.string().regex(/^\d{6}$/, "OTP must be 6 digits")
+
+})
+export const validateOtp = zValidator("json",verifyOtpSchema)
+export type validateOtpType = z.infer<typeof verifyOtpSchema>
+
+
+ const resetPasswordSchema = z.object({
+    
+    newPassword: z.string()
+})
+export const validateResetPassword = zValidator("json",resetPasswordSchema)
+export type validateResetType = z.infer<typeof resetPasswordSchema>

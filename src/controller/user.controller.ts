@@ -1,14 +1,17 @@
 import type { Context } from "hono";
 import { db } from "../db/db.js";
-import { users } from "../db/schema.js";
-import type {register, logintype,updateUserType } from "../middleware/zodvalidation.middleware.js"
+import { users , emailOtp} from "../db/schema.js";
+import type {register, logintype,updateUserType,forgetPasswordType, validateOtpType,validateResetType } from "../middleware/zodvalidation.middleware.js"
 import { ApiError } from "../utility/ApiError.utility.js";
 import argon2 from 'argon2'
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { uploadOnCloudinary } from "../utility/cloudinary.utility.js";
 import { generateAccessToken, generateRefreshToken } from "../utility/accesstoken.utility.js";
 import { deleteCookie, setCookie, getCookie } from "hono/cookie";
 import jwt from "jsonwebtoken"
+import crypto from "node:crypto"
+import { sendOtpEmail } from "../services/email.services.js";
+import { SignJWT} from "jose"
 
 
 
@@ -283,8 +286,188 @@ const updatePassword = async(c:Context) =>{
 
 }
 
+type forgetType = Context<any, any, {in:{json:forgetPasswordType}; out:{json:forgetPasswordType}}>
+const forgetPasswordAndSendOtp = async(c:forgetType) =>{
+    const {email} = c.req.valid("json")
+    const [user] = await db.select().from(users).where(eq(users.email,email))
+
+    if(!user){
+        throw new ApiError(404,"user not found, email is not register")
+
+    }
+
+    //generateing otp ..............
+    const otp = crypto.randomInt(100000,1000000).toString();
+
+    console.log("otp:",otp)
+    const hashOtp = await argon2.hash(otp)
+    console.log("log:",hashOtp)
+
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
+    await db.insert(emailOtp).values({
+        userId : user.id,
+        otpHash: hashOtp,
+        expiresAt,
+    })
+
+    await sendOtpEmail(user.email,otp)
+
+
+    return c.json({
+        success: true,
+        message:"otp and hashopt generate successfully",
+        data: {otp,hashOtp}
+    },200)
+    
+
+
+}
+
+type verifyOtpType = Context<any, any, {in:{json:validateOtpType}; out:{json:validateOtpType}}>
+const verifyResetOtp = async(c:verifyOtpType) =>{
+    
+    const {email,otp} = c.req.valid("json")
+    
+    //find user.......
+    const [user] = await db.select().from(users).where(eq(users.email,email))
+
+    if(!user){
+        throw new ApiError(401, "user not found")
+    }
+
+    const [otpRecords] = await db
+                .select()
+                .from(emailOtp)
+                .where(eq(emailOtp.userId,user.id))
+                .orderBy( desc (emailOtp.expiresAt))
+                .limit(1);
+
+    if(!otpRecords){
+        throw new ApiError(400, "invalid or Expired otp")
+    }
+
+    if(otpRecords.expiresAt < new Date()){
+        throw new ApiError(400,"OTP has expired")
+    }
+
+    if(otpRecords.attempts >=5){
+        throw new ApiError(429,"Too many incorrect attempts")
+    }
+
+    const isValidOtp = await argon2.verify(otpRecords.otpHash,otp)
+
+    if(!isValidOtp){
+            await db
+            .update(emailOtp)
+            .set({attempts:otpRecords.attempts+1})
+            .where(eq(emailOtp.id,otpRecords.id))
+        throw new ApiError(401,"Invalid otp")
+    }
+
+    //if otp is valid dlt is so it cannot be used again
+
+    await db
+        .delete(emailOtp)
+        .where(eq(emailOtp.id,otpRecords.id))
+
+
+    //create temp passowrd reset token......
+
+    const passwordResetToken = await new SignJWT({
+        userId: user.id,
+        purpose: "Password-reset",
+    })
+    .setProtectedHeader({
+        alg: "HS256",
+    })
+    .setIssuedAt()
+    .setExpirationTime("10m")
+    .sign(
+        new TextEncoder().encode(
+            process.env.PASSWORD_RESET_TOKEN_SECRET!
+        )
+    )
+
+    const Options = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict" as const,
+        maxAge: 10*60,    //10 min
+
+    }
+
+    setCookie(c,"passwordResetToken",passwordResetToken, Options)
+
+    return c.json({
+        success:true,
+        message: "otp verified sucesssfully",
+    })
+
+}
+
+
+type verifyResetType = Context<any, any, {in:{json:validateResetType}; out:{json:validateResetType}}>
+const resetPassword = async(c:verifyResetType) =>{
+    const resetPasswordToken = getCookie(c,"passwordResetToken")
+
+    if(!resetPasswordToken){
+        throw new ApiError(401,"password reset session expired")
+    }
+    const { newPassword} =  c.req.valid("json")
+
+    //verify reset Token....
+    let decoded: {userId: string; purpose:string}
+    try {
+         decoded = jwt.verify(
+            resetPasswordToken,
+            process.env.PASSWORD_RESET_TOKEN_SECRET as string
+        )as {
+            userId:string;
+            purpose:string,
+        }
+
+    } catch (error) {
+        throw new ApiError(401,"Invalid or expired password token")
+        
+    }
+
+    if(decoded.purpose !== "Password-reset"){
+        throw new ApiError(401, "Invalid password reset token")
+
+    }
+
+    const [user] = await db.select().from(users).where(eq(users.id,decoded.userId))
+    if(!user){
+        throw new ApiError(401,"user not found")
+    }
+
+    //HASH THE NEW PASSWORD.....
+    const hashPassword = await argon2.hash(newPassword)
+
+    //update the database ................
+    await db.update(users).set({password: hashPassword}).where(eq(users.id,user.id))
+    deleteCookie(c,"resetPasswordToken")
+
+
+    return c.json({
+        success: true,
+        message:"Password rest sucessfully"
+    },200)
+
+}
 
 
 
 
-export { registerUser, login,logout, refreshAccessToken,getCurrentUser, updateUSerProfile, updatePassword} 
+
+export { 
+        registerUser, 
+        login,logout, 
+        refreshAccessToken,
+        getCurrentUser, 
+        updateUSerProfile, 
+        updatePassword,
+        forgetPasswordAndSendOtp,
+        verifyResetOtp,
+        resetPassword,
+    } 

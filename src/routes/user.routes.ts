@@ -1,7 +1,7 @@
-import { validatelogin, validateUser,validateUpdate, validateUpdatePassword } from "../middleware/zodvalidation.middleware.js";
+import { validatelogin, validateUser,validateUpdate, validateUpdatePassword, validateforgetPassword,validateOtp, validateResetPassword } from "../middleware/zodvalidation.middleware.js";
 import  { verifyJWT } from "../middleware/verifyjwt.middleware.js";
 //import users from '../db/schema.js'
-import { login, registerUser,logout, refreshAccessToken, getCurrentUser,updateUSerProfile, updatePassword } from "../controller/user.controller.js";
+import { login, registerUser,logout, refreshAccessToken, getCurrentUser,updateUSerProfile, updatePassword, forgetPasswordAndSendOtp,verifyResetOtp, resetPassword } from "../controller/user.controller.js";
 import { Hono } from "hono";
 
 
@@ -15,6 +15,9 @@ route.post("/refreshAccessToken",refreshAccessToken)
 route.post("/getCurrentUser", verifyJWT, getCurrentUser)
 route.post("/updateuserprofile", verifyJWT, validateUpdate,updateUSerProfile)
 route.post("/updatepassword", verifyJWT, validateUpdatePassword, updatePassword)
+route.post("/forgetPassword",validateforgetPassword, forgetPasswordAndSendOtp)
+route.post("/verifyotp",validateOtp, verifyResetOtp)
+route.post("/resetpassword", validateResetPassword, resetPassword)
 
 
 export default route;

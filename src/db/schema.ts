@@ -1,5 +1,6 @@
-import { integer, timestamp, check,uuid,text, pgTable } from "drizzle-orm/pg-core";
+import { integer, timestamp, check,uuid,text, pgTable,boolean } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+
 
 
 const users = pgTable("users", {
@@ -13,10 +14,29 @@ const users = pgTable("users", {
     updatedAt: timestamp("updated_at",{withTimezone: true}).defaultNow().$onUpdate(() => new Date()).notNull(),
     profile: text("profile").notNull(),
     refreshToken: text("refresh_token"),
+    emailVerified: boolean("emailVerified").default(false),
 }, (table) =>[
     check("age_check1", sql `${table.age} between 18 and 50`),
     check("number_check", sql`${table.number}::text ~ '^[0-9]{10}$'`),
 ]
 )
 
-export { users}
+const emailOtp = pgTable("emailotp",{
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId : uuid("userId").references(() => users.id).notNull(),
+
+    otpHash: text("otpHash").notNull(),
+
+    expiresAt : timestamp("expiresAt",{
+        withTimezone: true
+    }).notNull(),
+
+    attempts: integer("attempts").notNull().default(0),
+
+    createdAt: timestamp("createdAt",{
+        withTimezone: true,
+    }).defaultNow().notNull(),
+
+})
+
+export { users, emailOtp}
