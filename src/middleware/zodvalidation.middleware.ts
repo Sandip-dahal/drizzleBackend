@@ -76,7 +76,7 @@ export type validateOtpType = z.infer<typeof verifyOtpSchema>
 
  const resetPasswordSchema = z.object({
     
-    newPassword: z.string()
+    newPassword: z.string().min(8,"password must be atleast 8 char"),
 })
 export const validateResetPassword = zValidator("json",resetPasswordSchema)
 export type validateResetType = z.infer<typeof resetPasswordSchema>

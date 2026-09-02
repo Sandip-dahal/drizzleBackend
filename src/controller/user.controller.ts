@@ -11,7 +11,9 @@ import { deleteCookie, setCookie, getCookie } from "hono/cookie";
 import jwt from "jsonwebtoken"
 import crypto from "node:crypto"
 import { sendOtpEmail } from "../services/email.services.js";
-import { SignJWT} from "jose"
+import { jwtVerify, SignJWT} from "jose"
+import { decode } from "node:punycode";
+
 
 
 
@@ -122,21 +124,21 @@ const login = async(c:loginType) =>{
     const [existingUser] = await db.select().from(users).where(eq(users.email,email))
 
     if(!existingUser){
-        throw new ApiError(401,"Invalid email")
+        throw new ApiError(401,"Invalid email or password")
     }
 
     const isPasswordCorrect = await argon2.verify(existingUser.password, password)
 
     if(!isPasswordCorrect){
-        throw new ApiError(401,"Please enter the correct password")
+        throw new ApiError(401,"Invalid email or passsword")
     }
 
     const { accessToken, refreshToken } = await generateAccessTokenAndRefreshToken(existingUser)
 
-    await db.update(users).set({refreshToken:refreshToken}).where (eq(users.id,existingUser.id))
+    //await db.update(users).set({refreshToken:refreshToken}).where (eq(users.id,existingUser.id))
     const options = {
         httpOnly:true,
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
         sameSite: "strict" as const,
         maxAge: 10*24*60*60
     }
@@ -166,7 +168,7 @@ const logout = async(c:Context) =>{
     return c.json({
         success: true,
         message: "logout successfull"
-    },201)
+    },200)
 }
 
 const refreshAccessToken = async(c:Context) =>{
@@ -193,7 +195,7 @@ const refreshAccessToken = async(c:Context) =>{
         }
 
         const { accessToken, refreshToken} = await generateAccessTokenAndRefreshToken(user)
-        await db.update(users).set({refreshToken:refreshToken}).where(eq(users.id,user.id))
+        //await db.update(users).set({refreshToken:refreshToken}).where(eq(users.id,user.id))
 
         const options = {
             httpOnly:true,
@@ -237,15 +239,27 @@ const updateUSerProfile = async(c:UserType) =>{
 
 
 
-    const [updatedUser] = await db.update(users).set(newData).where(eq(users.id,user.id)).returning()
-
-    const{password,refreshToken, ...safeUser} = updatedUser
-
-    return c.json({
-        success: true,
-        message: "user Data is updated successfully",
-        data : safeUser
-    })
+    try {
+        const [updatedUser] = await db.update(users).set(newData).where(eq(users.id,user.id)).returning()
+    
+        const{password,refreshToken, ...safeUser} = updatedUser
+    
+        return c.json({
+            success: true,
+            message: "user Data is updated successfully",
+            data : safeUser
+        })
+    } catch (err: unknown) {
+        if(err && typeof err==="object" 
+            && "code" in err 
+            && "constraint" in err 
+            && err.code === "23505" 
+            && err.constraint ==="users_email_unique"
+        ){
+            throw new ApiError(409,"Email alreay in use")
+        }
+        
+    }
     
 
 }
@@ -298,10 +312,7 @@ const forgetPasswordAndSendOtp = async(c:forgetType) =>{
 
     //generateing otp ..............
     const otp = crypto.randomInt(100000,1000000).toString();
-
-    console.log("otp:",otp)
     const hashOtp = await argon2.hash(otp)
-    console.log("log:",hashOtp)
 
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
     await db.insert(emailOtp).values({
@@ -316,7 +327,7 @@ const forgetPasswordAndSendOtp = async(c:forgetType) =>{
     return c.json({
         success: true,
         message:"otp and hashopt generate successfully",
-        data: {otp,hashOtp}
+        
     },200)
     
 
@@ -326,7 +337,7 @@ const forgetPasswordAndSendOtp = async(c:forgetType) =>{
 type verifyOtpType = Context<any, any, {in:{json:validateOtpType}; out:{json:validateOtpType}}>
 const verifyResetOtp = async(c:verifyOtpType) =>{
     
-    const {email,otp} = c.req.valid("json")
+    const {email, otp} = c.req.valid("json")
     
     //find user.......
     const [user] = await db.select().from(users).where(eq(users.email,email))
@@ -397,6 +408,8 @@ const verifyResetOtp = async(c:verifyOtpType) =>{
     }
 
     setCookie(c,"passwordResetToken",passwordResetToken, Options)
+    
+    
 
     return c.json({
         success:true,
@@ -416,18 +429,36 @@ const resetPassword = async(c:verifyResetType) =>{
     const { newPassword} =  c.req.valid("json")
 
     //verify reset Token....
-    let decoded: {userId: string; purpose:string}
-    try {
-         decoded = jwt.verify(
-            resetPasswordToken,
-            process.env.PASSWORD_RESET_TOKEN_SECRET as string
-        )as {
-            userId:string;
-            purpose:string,
-        }
+    // here resetToken is generated using jose, but decode using jwt, can also be decpded by jose....
+    // let decoded: {userId: string; purpose:string}
+    // try {
+    //      decoded = jwt.verify(
+    //         resetPasswordToken,
+    //         process.env.PASSWORD_RESET_TOKEN_SECRET as string
+    //     )as {
+    //         userId:string;
+    //         purpose:string,
+    //     }
 
-    } catch (error) {
-        throw new ApiError(401,"Invalid or expired password token")
+    // } catch (error) {
+    //     throw new ApiError(401,"Invalid or expired password token")
+        
+    // }
+
+    //Decoding using jose ...................
+
+    let decoded: {userId: string; purpose: string}
+
+    try {
+        
+        const {payload} = await jwtVerify(
+            resetPasswordToken,
+            new TextEncoder().encode(process.env.PASSWORD_RESET_TOKEN_SECRET!)
+        );
+        decoded = payload as {userId: string; purpose: string}
+
+    } catch  {
+        throw new ApiError(401, "Invalid or expired Password rest token")
         
     }
 
@@ -445,8 +476,8 @@ const resetPassword = async(c:verifyResetType) =>{
     const hashPassword = await argon2.hash(newPassword)
 
     //update the database ................
-    await db.update(users).set({password: hashPassword}).where(eq(users.id,user.id))
-    deleteCookie(c,"resetPasswordToken")
+    await db.update(users).set({password: hashPassword, refreshToken: null}).where(eq(users.id,user.id))
+    deleteCookie(c,"passwordResetToken")
 
 
     return c.json({
