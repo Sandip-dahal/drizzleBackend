@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer"
+import { emailOtp } from "../db/schema.js"
 
 const transporter = nodemailer.createTransport({
 
@@ -21,16 +22,21 @@ const transporter = nodemailer.createTransport({
 const sendOtpEmail = async(
     email:string,
     otp: string,
+    purpose: "email-verification" | "password-reset"
 ): Promise<void> =>{
+
+    const title =
+        purpose === "email-verification"? "email verification" : "password-reset";
+    
     await transporter.sendMail({
         from:process.env.SMTP_FROM,
         to: email,
-        subject: "Password reset OTP",
+        subject: `${title} OTP`,
         text: `your password reser OTP is ${otp}. It will expire in 10 min`,
 
         html: `<div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto;">
                 
-                <h2>Password Reset</h2>
+                <h2>${title.toLowerCase()}</h2>
 
                 <p>
                     We received a request to reset your password.

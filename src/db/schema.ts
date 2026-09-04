@@ -27,6 +27,8 @@ const emailOtp = pgTable("emailotp",{
 
     otpHash: text("otpHash").notNull(),
 
+    purpose: text("purpose").notNull(),
+
     expiresAt : timestamp("expiresAt",{
         withTimezone: true
     }).notNull(),

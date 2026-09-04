@@ -1,0 +1,1 @@
+ALTER TABLE "emailotp" ADD COLUMN "purpose" text NOT NULL;

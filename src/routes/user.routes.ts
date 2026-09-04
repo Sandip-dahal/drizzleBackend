@@ -1,7 +1,29 @@
-import { validatelogin, validateUser,validateUpdate, validateUpdatePassword, validateforgetPassword,validateOtp, validateResetPassword } from "../middleware/zodvalidation.middleware.js";
+import { 
+    validatelogin, 
+    validateUser,
+    validateUpdate, 
+    validateUpdatePassword, 
+    validateforgetPassword,
+    validateOtp, 
+    validateResetPassword, 
+    validateResendOtp 
+} from "../middleware/zodvalidation.middleware.js";
+
 import  { verifyJWT } from "../middleware/verifyjwt.middleware.js";
-//import users from '../db/schema.js'
-import { login, registerUser,logout, refreshAccessToken, getCurrentUser,updateUSerProfile, updatePassword, forgetPasswordAndSendOtp,verifyResetOtp, resetPassword } from "../controller/user.controller.js";
+import {  
+    registerUser,
+    verifyEmail,
+    login,logout, 
+    refreshAccessToken, 
+    getCurrentUser,
+    updateUSerProfile, 
+    updatePassword, 
+    forgetPasswordAndSendOtp,
+    verifyResetOtp, 
+    resetPassword, 
+    resendOtp 
+} from "../controller/user.controller.js";
+
 import { Hono } from "hono";
 
 
@@ -9,6 +31,8 @@ const route = new Hono()
 
 
 route.post("/registerUser",validateUser,registerUser)
+route.post("/resendotp", validateResendOtp,resendOtp)
+route.post("/verifyEmail",validateOtp, verifyEmail)
 route.post("/login",validatelogin, login)
 route.post("/logout", verifyJWT, logout)
 route.post("/refreshAccessToken",refreshAccessToken)

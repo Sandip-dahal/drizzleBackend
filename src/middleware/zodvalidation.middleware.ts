@@ -4,10 +4,12 @@ import { zValidator } from "@hono/zod-validator"
 const userSchemaValidaition = z.object({
     name:z
     .string()
+    .trim()
     .min(3,'Name is required at least 3 char'),
 
     email: z
     .string()
+    .trim()
     .regex(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,"enter a valid email addresh"),
 
     number:z
@@ -23,6 +25,9 @@ const userSchemaValidaition = z.object({
     password: z
     .string()
     .min(8,"password must be atleast 8 char"),
+
+    emailVerified: z
+    .boolean()
 
 });
 export const validateUser = zValidator("form", userSchemaValidaition)
@@ -44,7 +49,8 @@ export const updateUserSchema = userSchemaValidaition.pick({
     name: true,
     email:true, 
     age:true, 
-    number:true
+    number:true,
+    emailVerified: true,
 }).partial()
 export const validateUpdate = zValidator("json",updateUserSchema)
 export type updateUserType = z.infer<typeof updateUserSchema>
@@ -56,6 +62,7 @@ export const updatePasswordSchema = z.object({
 });
 
 export const validateUpdatePassword = zValidator("json", updatePasswordSchema);
+export type updatePasswordType = z.infer< typeof updatePasswordSchema>
 
 const forgetPasswordSchema = userSchemaValidaition.pick({
     email: true,
@@ -74,9 +81,19 @@ export const validateOtp = zValidator("json",verifyOtpSchema)
 export type validateOtpType = z.infer<typeof verifyOtpSchema>
 
 
+
+
  const resetPasswordSchema = z.object({
     
     newPassword: z.string().min(8,"password must be atleast 8 char"),
 })
 export const validateResetPassword = zValidator("json",resetPasswordSchema)
 export type validateResetType = z.infer<typeof resetPasswordSchema>
+
+
+
+
+//resendotp validation...........................
+export const resendOtpSchema = userSchemaValidaition.pick({ email: true})
+export const validateResendOtp = zValidator("json", resendOtpSchema)
+export type validateResendOtpType = z.infer<typeof resendOtpSchema>
