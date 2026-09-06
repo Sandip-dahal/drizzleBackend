@@ -6,7 +6,7 @@ import {
     pgEnum,
 
 } from "drizzle-orm/pg-core"
-import { organisation } from "./organization.js"
+import { organisation } from "./organisation.js"
 
 
 const customerStatusEnum = pgEnum("customerStatusEnum",[
@@ -15,16 +15,15 @@ const customerStatusEnum = pgEnum("customerStatusEnum",[
 ])
 
 const customer = pgTable("customer",{
-    id: uuid("text")
+    id: uuid("id")
         .primaryKey()
-        .notNull(),
+        .defaultRandom(),
 
     organisation_id: uuid("organisation_id")
         .references(() => organisation.id,{ onDelete: "cascade"})
         .notNull(),
 
-    name: text("name")
-        .notNull(),
+    name: text("name"),
 
     email: text("email"),
         
@@ -35,7 +34,7 @@ const customer = pgTable("customer",{
 
     tax_number: text("tax_number"),
 
-    notes: text("text"),
+    notes: text("note"),
 
     status: customerStatusEnum("status")
         .default("active"),

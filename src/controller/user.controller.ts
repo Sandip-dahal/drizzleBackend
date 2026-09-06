@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import { db } from "../db/db.js";
+import { db } from "../db/dbs/db.js";
 import { 
     users , 
     emailOtp
@@ -35,7 +35,7 @@ import crypto from "node:crypto"
 import { sendOtpEmail } from "../services/email.services.js";
 import { jwtVerify, SignJWT} from "jose"
 import { generateAndVerificationOtp } from "../services/otp.service.js"
-import { email } from "zod";
+
 
 
 

@@ -5,7 +5,7 @@ import {
     pgEnum,
 } from "drizzle-orm/pg-core"
 
-import {  organisation } from "./organization.js"
+import {  organisation } from "./organisation.js"
 import { users } from "./schema.js"
 
 
@@ -44,3 +44,5 @@ const membership = pgTable("membership",{
         .notNull()
         .$onUpdate(() => new Date())
 })
+
+export { membership, membershipRole}

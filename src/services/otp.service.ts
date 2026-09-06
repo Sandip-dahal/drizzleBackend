@@ -1,6 +1,6 @@
 import crypto from "node:crypto"
 import argon2 from "argon2"
-import  {db} from "../db/db.js"
+import  {db} from "../db/dbs/db.js"
 import { and , eq} from "drizzle-orm"
 import { emailOtp } from "../db/schema.js"
 import { sendOtpEmail } from "./email.services.js"

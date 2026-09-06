@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^26.1.1",
+    "@types/node": "^26.4.1",
     "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.23.1",
     "drizzle-kit": "^0.31.10",

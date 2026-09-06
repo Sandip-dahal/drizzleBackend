@@ -1,5 +1,5 @@
 {
-  "id": "111a5343-70f6-4457-a292-80d4110516ac",
+  "id": "c03b1930-d1d2-4e31-b485-95aa0d01166c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -83,12 +83,11 @@
       "name": "customer",
       "schema": "",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "organisation_id": {
           "name": "organisation_id",
@@ -122,12 +121,6 @@
         },
         "tax_number": {
           "name": "tax_number",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "note": {
-          "name": "note",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -278,86 +271,6 @@
           "value": " \"inventory\".\"reorder_level\" >=0"
         }
       },
-      "isRLSEnabled": false
-    },
-    "public.membership": {
-      "name": "membership",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "organisation_id": {
-          "name": "organisation_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "role": {
-          "name": "role",
-          "type": "membership_role",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "membership_user_id_users_id_fk": {
-          "name": "membership_user_id_users_id_fk",
-          "tableFrom": "membership",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "membership_organisation_id_organisation_id_fk": {
-          "name": "membership_organisation_id_organisation_id_fk",
-          "tableFrom": "membership",
-          "tableTo": "organisation",
-          "columnsFrom": [
-            "organisation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.organisation": {
@@ -694,8 +607,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "purchase-id": {
           "name": "purchase-id",
@@ -1075,7 +987,7 @@
       "checkConstraints": {
         "sale_item_quantity_positive": {
           "name": "sale_item_quantity_positive",
-          "value": "\"sale_item\".\"quantity\" >= 0"
+          "value": "\"sale_item\".\"quantity\" > 0"
         },
         "sale_item_unit_price_no_negative": {
           "name": "sale_item_unit_price_no_negative",
@@ -1208,15 +1120,15 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "sale_customer_id_customer_id_fk": {
-          "name": "sale_customer_id_customer_id_fk",
+        "sale_customer_id_customer_text_fk": {
+          "name": "sale_customer_id_customer_text_fk",
           "tableFrom": "sale",
           "tableTo": "customer",
           "columnsFrom": [
             "customer_id"
           ],
           "columnsTo": [
-            "id"
+            "text"
           ],
           "onDelete": "restrict",
           "onUpdate": "no action"
@@ -1539,7 +1451,7 @@
       "checkConstraints": {
         "stock_movement_qunatity_not_zero": {
           "name": "stock_movement_qunatity_not_zero",
-          "value": " \"stock_movement\".\"qunatity\" >=0"
+          "value": " \"stock_movement\".\"qunatity\""
         }
       },
       "isRLSEnabled": false
@@ -1551,7 +1463,7 @@
         "id": {
           "name": "id",
           "type": "uuid",
-          "primaryKey": true,
+          "primaryKey": false,
           "notNull": true,
           "default": "gen_random_uuid()"
         },
@@ -1573,8 +1485,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "address": {
-          "name": "address",
+        "addresh": {
+          "name": "addresh",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -1593,7 +1505,7 @@
         },
         "phone_no": {
           "name": "phone_no",
-          "type": "text",
+          "type": "numeric",
           "primaryKey": false,
           "notNull": true
         },
@@ -1605,11 +1517,10 @@
         },
         "status": {
           "name": "status",
-          "type": "supplierstatusenum",
+          "type": "supplierStatusEnum",
           "typeSchema": "public",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'active'"
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -1638,7 +1549,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -1658,15 +1569,6 @@
         "inactive"
       ]
     },
-    "public.membership_role": {
-      "name": "membership_role",
-      "schema": "public",
-      "values": [
-        "owner",
-        "manager",
-        "cashier"
-      ]
-    },
     "public.product_status": {
       "name": "product_status",
       "schema": "public",
@@ -1682,14 +1584,6 @@
         "draft",
         "completed",
         "cancelled"
-      ]
-    },
-    "public.supplierstatusenum": {
-      "name": "supplierstatusenum",
-      "schema": "public",
-      "values": [
-        "active",
-        "inactive"
       ]
     }
   },

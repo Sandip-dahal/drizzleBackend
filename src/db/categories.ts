@@ -6,7 +6,7 @@ import {
     unique
 } from "drizzle-orm/pg-core"
 
-import { organisation} from "./organization.js"
+import { organisation} from "./organisation.js"
 
 
 

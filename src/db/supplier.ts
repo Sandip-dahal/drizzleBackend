@@ -7,12 +7,12 @@ import {
     timestamp,
     pgEnum,
 } from "drizzle-orm/pg-core";
-import { organisation } from "./organization.js";
+import { organisation } from "./organisation.js";
 
 
 
 
-const supplierStatusEnum = pgEnum("supplierStatusEnum",[
+const supplierStatusEnum = pgEnum("supplierstatusenum",[
     "active",
     "inactive"
 ])
@@ -23,30 +23,32 @@ const supplier = pgTable("supplier", {
 
 
     id: uuid("id")
-        .notNull()
+        .primaryKey()
         .defaultRandom(),
 
     organisation_id: uuid("organisation_id")
         .notNull()
-        .references(() => organisation.id),
+        .references(() => organisation.id,{onDelete: "cascade"}),
 
     name: text("name")
         .notNull(),
 
     contact_person: text("contact_person"),
 
-    addresh: text("addresh")
+    address: text("address")
         .notNull(),
 
     email: text("email"),
 
     tax_number: text("tax_number"),
 
-    phone_no : numeric("phone_no")
+    phone_no : text("phone_no")
         .notNull(),
 
     notes: text("notes"),
-    status: supplierStatusEnum("status"),
+    status: supplierStatusEnum("status")
+    .notNull()
+    .default("active"),
 
 
     created_at : timestamp("created_at", { withTimezone: true})
@@ -60,4 +62,4 @@ const supplier = pgTable("supplier", {
 })
 
 
-export { supplier }
+export { supplier, supplierStatusEnum }

@@ -6,8 +6,6 @@ import {
     text, 
     pgTable,
     boolean, 
-    pgEnum ,
-    unique,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -15,7 +13,9 @@ import { sql } from "drizzle-orm";
 
 
 const users = pgTable("users", {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id")
+    .primaryKey()
+    .defaultRandom(),
 
     name: text("name").notNull(),
 
@@ -48,7 +48,9 @@ const users = pgTable("users", {
 )
 
 const emailOtp = pgTable("emailotp",{
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id")
+    .primaryKey()
+    .defaultRandom(),
 
     userId : uuid("userId")
         .references(() => users.id)
