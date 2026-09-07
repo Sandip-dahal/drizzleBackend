@@ -26,9 +26,6 @@ const userSchemaValidaition = z.object({
     .string()
     .min(8,"password must be atleast 8 char"),
 
-    emailVerified: z
-    .boolean()
-
 });
 export const validateUser = zValidator("form", userSchemaValidaition)
 export type register = z.infer< typeof userSchemaValidaition >
@@ -50,7 +47,6 @@ export const updateUserSchema = userSchemaValidaition.pick({
     email:true, 
     age:true, 
     number:true,
-    emailVerified: true,
 }).partial()
 export const validateUpdate = zValidator("json",updateUserSchema)
 export type updateUserType = z.infer<typeof updateUserSchema>

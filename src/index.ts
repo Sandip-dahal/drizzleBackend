@@ -1,6 +1,7 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import userRoutes from "./routes/user.routes.js"
+import organisationRoutes from "./routes/organisation.routes.js"
 import {cors} from "hono/cors"
 
 const app = new Hono()
@@ -8,6 +9,7 @@ const app = new Hono()
 app.use("*",cors())
 
 app.route("/api/v1/user", userRoutes)
+app.route("/api/v1/organisation",organisationRoutes)
 
 
 

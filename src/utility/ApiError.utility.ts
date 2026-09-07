@@ -1,5 +1,3 @@
-import { error } from "node:console";
-
 class ApiError extends Error {
     statusCode: number;
     data: null;
